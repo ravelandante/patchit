@@ -1,0 +1,18 @@
+{
+  "name": "patchit",
+  "version": "1.0.0",
+  "description": "Interactive pnpm patch workflow helper",
+  "type": "module",
+  "main": "index.mjs",
+  "bin": {
+    "patchit": "./index.js"
+  },
+  "keywords": [
+    "pnpm",
+    "patch",
+    "workflow",
+    "cli"
+  ],
+  "author": "Fynn Young",
+  "license": "ISC"
+}
