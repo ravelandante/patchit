@@ -1,158 +1,14 @@
 #!/usr/bin/env node
 
-import { exec } from "child_process";
-import * as readline from "readline";
-import { promisify } from "util";
-import { readFile } from "fs/promises";
-
-const execAsync = promisify(exec);
-
-const colours = {
-  reset: "\x1b[0m",
-  green: "\x1b[32m",
-  red: "\x1b[31m",
-};
-
-function logSuccess(message) {
-  console.log(`${colours.green}✓ ${message}${colours.reset}`);
-}
-
-function logError(message) {
-  console.log(`${colours.red}✗ ${message}${colours.reset}`);
-}
-
-async function updateDependencies() {
-  console.log(`\nInstalling latest dependencies...`);
-  await execAsync("pnpm i", { cwd: process.cwd() });
-  logSuccess("Dependencies updated");
-}
-
-async function createPatch(packageName) {
-  console.log(`\nRunning pnpm patch ${packageName}...`);
-  const { stdout } = await execAsync(`pnpm patch ${packageName}`, {
-    cwd: process.cwd(),
-  });
-
-  const patchDirMatch = stdout.match(
-    /You can now edit the package at:\s*\n\s*\n\s*(.+?)(?:\s*\(|$)/i,
-  );
-
-  if (!patchDirMatch) {
-    logError("Could not find patch directory in pnpm output");
-    console.log("\nOutput was:");
-    console.log(stdout);
-    process.exit(1);
-  }
-
-  const patchDir = patchDirMatch[1].trim();
-  logSuccess(`Patch created at: ${patchDir}`);
-  return patchDir;
-}
-
-async function openPatch(patchDir) {
-  console.log(`\nOpening patch dir...`);
-  await execAsync(`code "${patchDir}"`);
-  logSuccess("Opened");
-}
-
-async function getPackageVersionFromList(packageName) {
-  const { stdout: listOutput } = await execAsync(
-    `pnpm list ${packageName} --json --depth=0`,
-    { cwd: process.cwd() },
-  );
-  const listData = JSON.parse(listOutput);
-  const packageVersion =
-    listData[0]?.dependencies?.[packageName]?.version ||
-    listData[0]?.devDependencies?.[packageName]?.version;
-
-  if (!packageVersion) {
-    return;
-  }
-
-  const packageWithVersion = `${packageName}@${packageVersion}`;
-  return packageWithVersion;
-}
-
-async function getPackageVersionFromManifest(packageName) {
-  try {
-    const packageJsonContent = await readFile("package.json", "utf8");
-    const packageJson = JSON.parse(packageJsonContent);
-
-    const dependencies = packageJson.dependencies || {};
-    const devDependencies = packageJson.devDependencies || {};
-
-    const version = dependencies[packageName] || devDependencies[packageName];
-
-    if (!version) {
-      logError(`Could not find ${packageName} in package.json dependencies`);
-      process.exit(1);
-    }
-
-    const cleanVersion = version.replace(/^[^\d]+/, "");
-
-    return `${packageName}@${cleanVersion}`;
-  } catch (error) {
-    logError(`Failed to read package.json: ${error.message}`);
-    process.exit(1);
-  }
-}
-
-async function getPackageVersion(packageName) {
-  let packageVersion = await getPackageVersionFromList(packageName);
-  if (!packageVersion) {
-    packageVersion = await getPackageVersionFromManifest(packageName);
-  }
-  return packageVersion;
-}
-
-async function removePatch(packageName) {
-  console.log("\n\nRemoving patch...");
-  try {
-    const packageWithVersion = await getPackageVersion(packageName);
-    await execAsync(`pnpm patch-remove ${packageWithVersion}`, {
-      cwd: process.cwd(),
-    });
-    logSuccess("Patch removed");
-  } catch (error) {
-    logError(`Failed to remove patch: ${error}`);
-  }
-}
-
-async function waitForKey(prompt, onEscape) {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  readline.emitKeypressEvents(process.stdin, rl);
-
-  if (process.stdin.isTTY) {
-    process.stdin.setRawMode(true);
-  }
-
-  return new Promise((resolve) => {
-    const onKeypress = async (str, key) => {
-      if (key.name === "escape") {
-        if (process.stdin.isTTY) {
-          process.stdin.setRawMode(false);
-        }
-        rl.close();
-        await onEscape();
-        process.exit(0);
-      } else if (key.name === "return") {
-        if (process.stdin.isTTY) {
-          process.stdin.setRawMode(false);
-        }
-        process.stdin.removeListener("keypress", onKeypress);
-        rl.close();
-        resolve();
-      }
-    };
-
-    process.stdout.write(prompt);
-    process.stdin.on("keypress", onKeypress);
-  });
-}
+import { logError, logSuccess } from "./utils/terminal.js";
+import { waitForKey } from "./utils/terminal.js";
+import {
+  createPatch,
+  openPatch,
+  removePatch,
+  commitPatch,
+  updateDependencies,
+} from "./utils/patch.js";
 
 async function main() {
   const packageName = process.argv[2];
@@ -188,11 +44,7 @@ async function main() {
         },
       );
 
-      console.log(`\nRunning: ${commitCommand}`);
-      const { stdout: commitOutput } = await execAsync(commitCommand, {
-        cwd: process.cwd(),
-      });
-
+      const commitOutput = await commitPatch(patchDir);
       console.log(commitOutput);
       commitCount++;
       logSuccess(`Patch #${commitCount} committed`);
