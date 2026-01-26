@@ -11,17 +11,23 @@ import {
 } from "./utils/patch.js";
 
 async function main() {
-  const packageName = process.argv[2];
+  const args = process.argv.slice(2);
+  const packageName = args.find((arg) => !arg.startsWith("--"));
+  const noUpdate = args.includes("--no-update");
 
   if (!packageName) {
     logError("Please provide a package name");
-    console.log("\nUsage: node patchit.mjs <package-name>");
+    console.log("\nUsage: patchit <package-name> [--no-update]");
     process.exit(1);
   }
 
   try {
     // step 1: install latest dependencies
-    await updateDependencies();
+    if (!noUpdate) {
+      await updateDependencies();
+    } else {
+      console.log("\nSkipping dependency update...");
+    }
 
     // step 2: create patch
     const patchDir = await createPatch(packageName);
