@@ -1,5 +1,5 @@
 {
-  "name": "patchit",
+  "name": "@fynn-is-making-packages/patchit",
   "version": "1.0.0",
   "description": "Interactive pnpm patch workflow helper",
   "type": "module",
