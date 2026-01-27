@@ -71,6 +71,12 @@ export async function useDirPath(packageName, dirPath) {
     process.exit(1);
   }
 
+  // Store original values for reversion
+  const originalValues = {
+    dependency: isDependency || null,
+    devDependency: isDevDependency || null,
+  };
+
   if (isDependency) {
     packageJson.dependencies[packageName] = `file:${dirPath}`;
   }
@@ -80,4 +86,24 @@ export async function useDirPath(packageName, dirPath) {
 
   await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");
   logSuccess(`Updated ${packageName} to use: ${dirPath}`);
+
+  return originalValues;
+}
+
+export async function revertDirPath(packageName, originalValues) {
+  console.log(`\nReverting package.json...`);
+
+  const packageJsonPath = "package.json";
+  const packageJsonContent = await readFile(packageJsonPath, "utf8");
+  const packageJson = JSON.parse(packageJsonContent);
+
+  if (originalValues.dependency) {
+    packageJson.dependencies[packageName] = originalValues.dependency;
+  }
+  if (originalValues.devDependency) {
+    packageJson.devDependencies[packageName] = originalValues.devDependency;
+  }
+
+  await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");
+  logSuccess(`Reverted ${packageName} to original version`);
 }

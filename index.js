@@ -9,7 +9,7 @@ import {
   commitPatch,
   updateDependencies,
 } from "./utils/patch.js";
-import { useDirPath } from "./utils/package.js";
+import { useDirPath, revertDirPath } from "./utils/package.js";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -28,7 +28,7 @@ async function main() {
     // local dir path flow
     if (dirPath) {
       // step 1: update package.json to use local dir
-      await useDirPath(packageName, dirPath);
+      const originalValues = await useDirPath(packageName, dirPath);
 
       // step 2: install latest dependencies
       await updateDependencies();
@@ -37,6 +37,12 @@ async function main() {
       await openPatch(dirPath);
 
       console.log("\nYou can now edit the package directly.");
+
+      // step 4: wait for user to press Esc to revert and exit
+      await waitForKey("\nPress Esc to revert and exit...", async () => {
+        await revertDirPath(packageName, originalValues);
+        await updateDependencies();
+      });
     }
     // normal flow
     else {
