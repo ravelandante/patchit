@@ -46,7 +46,9 @@ async function main() {
       await waitForKey(
         "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
         async () => {
-          await removePatch(packageName);
+          if (commitCount > 0) {
+            await removePatch(packageName);
+          }
         },
       );
 

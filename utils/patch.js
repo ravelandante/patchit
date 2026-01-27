@@ -2,6 +2,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { logSuccess, logError } from "./terminal.js";
 import { getPackageVersion } from "./version.js";
+import launch from "launch-editor";
 
 const execAsync = promisify(exec);
 
@@ -35,7 +36,12 @@ export async function createPatch(packageName) {
 
 export async function openPatch(patchDir) {
   console.log(`\nOpening patch dir...`);
-  await execAsync(`code "${patchDir}"`);
+  launch(patchDir, null, (_, errorMessage) => {
+    logError(
+      `Failed to open patch directory automatically: ${errorMessage}. Please open it manually: ${patchDir}`,
+    );
+    return;
+  });
   logSuccess("Opened");
 }
 
