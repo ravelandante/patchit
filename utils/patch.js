@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import { promisify } from "util";
 import { logSuccess, logError } from "./terminal.js";
-import { getPackageVersion } from "./version.js";
+import { getPackageVersion } from "./package.js";
 import launch from "launch-editor";
 
 const execAsync = promisify(exec);

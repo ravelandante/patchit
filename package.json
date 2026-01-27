@@ -3,7 +3,7 @@
   "version": "1.2.2",
   "description": "Interactive pnpm patch workflow helper",
   "type": "module",
-  "main": "index.mjs",
+  "main": "index.js",
   "bin": {
     "patchit": "./index.js"
   },

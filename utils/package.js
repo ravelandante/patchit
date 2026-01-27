@@ -1,7 +1,8 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import { readFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 import { logError } from "./terminal.js";
+import { logSuccess } from "./terminal.js";
 
 const execAsync = promisify(exec);
 
@@ -53,4 +54,30 @@ export async function getPackageVersion(packageName) {
     packageVersion = await getPackageVersionFromManifest(packageName);
   }
   return packageVersion;
+}
+
+export async function useDirPath(packageName, dirPath) {
+  console.log(`\nUpdating package.json to use local dir...`);
+
+  const packageJsonPath = "package.json";
+  const packageJsonContent = await readFile(packageJsonPath, "utf8");
+  const packageJson = JSON.parse(packageJsonContent);
+
+  const isDependency = packageJson.dependencies?.[packageName];
+  const isDevDependency = packageJson.devDependencies?.[packageName];
+
+  if (!isDependency && !isDevDependency) {
+    logError(`Could not find ${packageName} in package.json dependencies`);
+    process.exit(1);
+  }
+
+  if (isDependency) {
+    packageJson.dependencies[packageName] = `file:${dirPath}`;
+  }
+  if (isDevDependency) {
+    packageJson.devDependencies[packageName] = `file:${dirPath}`;
+  }
+
+  await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");
+  logSuccess(`Updated ${packageName} to use: ${dirPath}`);
 }
