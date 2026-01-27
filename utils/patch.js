@@ -1,10 +1,25 @@
 import { exec } from "child_process";
 import { promisify } from "util";
+import { mkdir, readdir, rm } from "fs/promises";
+import { resolve, join } from "path";
 import { logSuccess, logError } from "./terminal.js";
 import { getPackageVersion } from "./package.js";
 import launch from "launch-editor";
 
 const execAsync = promisify(exec);
+
+function generatePatchDirName(packageName) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const timestamp = `${year}-${month}-${day}-${hours}${minutes}`;
+
+  const safeName = packageName.replace(/[@\/]/g, "-").replace(/^-+/, "");
+  return `${safeName}-${timestamp}`;
+}
 
 export async function updateDependencies() {
   console.log(`\nInstalling latest dependencies...`);
@@ -13,25 +28,24 @@ export async function updateDependencies() {
 }
 
 export async function createPatch(packageName) {
-  console.log(`\nRunning pnpm patch ${packageName}...`);
-  const { stdout } = await execAsync(`pnpm patch ${packageName}`, {
-    cwd: process.cwd(),
-  });
+  console.log(`\nCreating patch directory for ${packageName}...`);
 
-  const patchDirMatch = stdout.match(
-    /You can now edit the package at:\s*\n\s*\n\s*(.+?)(?:\s*\(|$)/i,
-  );
+  const dirName = generatePatchDirName(packageName);
+  const patchitDir = resolve(process.cwd(), "node_modules", ".patchit");
+  const patchDir = join(patchitDir, dirName);
 
-  if (!patchDirMatch) {
-    logError("Could not find patch directory in pnpm output");
-    console.log("\nOutput was:");
-    console.log(stdout);
+  await mkdir(patchitDir, { recursive: true });
+
+  try {
+    await execAsync(`pnpm patch ${packageName} --edit-dir "${patchDir}"`, {
+      cwd: process.cwd(),
+    });
+    logSuccess(`Patch created at: ${patchDir}`);
+    return patchDir;
+  } catch (error) {
+    logError(`Failed to create patch: ${error.message}`);
     process.exit(1);
   }
-
-  const patchDir = patchDirMatch[1].trim();
-  logSuccess(`Patch created at: ${patchDir}`);
-  return patchDir;
 }
 
 export async function openPatch(patchDir) {

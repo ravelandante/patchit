@@ -86,10 +86,10 @@ export async function useDirPath(packageName, dirPath) {
   };
 
   if (isDependency) {
-    packageJson.dependencies[packageName] = `file:${dirPath}`;
+    packageJson.dependencies[packageName] = `link:${dirPath}`;
   }
   if (isDevDependency) {
-    packageJson.devDependencies[packageName] = `file:${dirPath}`;
+    packageJson.devDependencies[packageName] = `link:${dirPath}`;
   }
 
   await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");

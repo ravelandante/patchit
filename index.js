@@ -70,8 +70,9 @@ async function main() {
         await waitForKey(
           "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
           async () => {
-            if (commitCount > 0) {
-              await removePatch(packageName);
+            await removePatch(packageName);
+            if (!noUpdate) {
+              await updateDependencies();
             }
           },
         );
