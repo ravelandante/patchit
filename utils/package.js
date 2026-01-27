@@ -6,6 +6,18 @@ import { logSuccess } from "./terminal.js";
 
 const execAsync = promisify(exec);
 
+const packageJsonPath = "package.json";
+
+const readPackageJson = async () => {
+  try {
+    const packageJsonContent = await readFile(packageJsonPath, "utf8");
+    return JSON.parse(packageJsonContent);
+  } catch (error) {
+    logError(`Failed to read package.json: ${error.message}`);
+    process.exit(1);
+  }
+};
+
 export async function getPackageVersionFromList(packageName) {
   const { stdout: listOutput } = await execAsync(
     `pnpm list ${packageName} --json --depth=0`,
@@ -26,8 +38,7 @@ export async function getPackageVersionFromList(packageName) {
 
 export async function getPackageVersionFromManifest(packageName) {
   try {
-    const packageJsonContent = await readFile("package.json", "utf8");
-    const packageJson = JSON.parse(packageJsonContent);
+    const packageJson = await readPackageJson();
 
     const dependencies = packageJson.dependencies || {};
     const devDependencies = packageJson.devDependencies || {};
@@ -59,9 +70,7 @@ export async function getPackageVersion(packageName) {
 export async function useDirPath(packageName, dirPath) {
   console.log(`\nUpdating package.json to use local dir...`);
 
-  const packageJsonPath = "package.json";
-  const packageJsonContent = await readFile(packageJsonPath, "utf8");
-  const packageJson = JSON.parse(packageJsonContent);
+  const packageJson = await readPackageJson();
 
   const isDependency = packageJson.dependencies?.[packageName];
   const isDevDependency = packageJson.devDependencies?.[packageName];
@@ -71,7 +80,6 @@ export async function useDirPath(packageName, dirPath) {
     process.exit(1);
   }
 
-  // Store original values for reversion
   const originalValues = {
     dependency: isDependency || null,
     devDependency: isDevDependency || null,
@@ -93,9 +101,7 @@ export async function useDirPath(packageName, dirPath) {
 export async function revertDirPath(packageName, originalValues) {
   console.log(`\nReverting package.json...`);
 
-  const packageJsonPath = "package.json";
-  const packageJsonContent = await readFile(packageJsonPath, "utf8");
-  const packageJson = JSON.parse(packageJsonContent);
+  const packageJson = await readPackageJson();
 
   if (originalValues.dependency) {
     packageJson.dependencies[packageName] = originalValues.dependency;
