@@ -76,7 +76,7 @@ async function main() {
           "\nPress Esc to stop watching and exit...",
           async () => {
             await watcher.close();
-            await removePatch(packageName);
+            await removePatch(packageName, patchDir);
             if (!noUpdate) {
               await updateDependencies();
             }
@@ -88,7 +88,7 @@ async function main() {
           await waitForKey(
             "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
             async () => {
-              await removePatch(packageName);
+              await removePatch(packageName, patchDir);
               if (!noUpdate) {
                 await updateDependencies();
               }

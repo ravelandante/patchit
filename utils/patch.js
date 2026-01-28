@@ -1,6 +1,6 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import { mkdir } from "fs/promises";
+import { mkdir, rm } from "fs/promises";
 import { resolve, join } from "path";
 import { logSuccess, logError } from "./terminal.js";
 import { getPackageVersion } from "./package.js";
@@ -59,7 +59,7 @@ export async function openPatch(patchDir) {
   logSuccess("Opened");
 }
 
-export async function removePatch(packageName) {
+export async function removePatch(packageName, patchDir) {
   console.log("\n\nRemoving patch...");
   try {
     const packageWithVersion = await getPackageVersion(packageName);
@@ -67,6 +67,10 @@ export async function removePatch(packageName) {
       cwd: process.cwd(),
     });
     logSuccess("Patch removed");
+
+    if (patchDir) {
+      await rm(patchDir, { recursive: true, force: true });
+    }
   } catch (error) {
     logError(`Failed to remove patch: ${error}`);
   }
