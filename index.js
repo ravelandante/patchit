@@ -10,17 +10,21 @@ import {
   updateDependencies,
 } from "./utils/patch.js";
 import { useDirPath, revertDirPath } from "./utils/package.js";
+import { watchAndCommit } from "./utils/watch.js";
 
 async function main() {
   const args = process.argv.slice(2);
   const packageName = args.find((arg) => !arg.startsWith("--"));
   const noUpdate = args.includes("--no-update");
+  const hotReload = args.includes("--hr");
   const dirIndex = args.indexOf("--dir");
   const dirPath =
     dirIndex !== -1 && args[dirIndex + 1] ? args[dirIndex + 1] : null;
 
   if (!packageName || (dirIndex !== -1 && !args[dirIndex + 1])) {
-    console.log("\nUsage: patchit <pkg-name> [--no-update] [--dir <dir-path>]");
+    console.log(
+      "\nUsage: patchit <pkg-name> [--no-update] [--hr] [--dir <dir-path>]",
+    );
     process.exit(1);
   }
 
@@ -64,27 +68,42 @@ async function main() {
       console.log("\ncommit command:");
       console.log(`  ${commitCommand}`);
 
-      // step 4: loop - keep prompting to commit
-      let commitCount = 0;
-      while (true) {
+      // step 4: hot reload or manual commit loop
+      if (hotReload) {
+        const watcher = await watchAndCommit(patchDir);
+
         await waitForKey(
-          "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
+          "\nPress Esc to stop watching and exit...",
           async () => {
+            await watcher.close();
             await removePatch(packageName);
             if (!noUpdate) {
               await updateDependencies();
             }
           },
         );
-
-        const commitOutput = await commitPatch(patchDir);
-        console.log(commitOutput);
-        commitCount++;
-        logSuccess(`Patch #${commitCount} committed`);
-        if (commitCount === 1) {
-          console.log(
-            "\nYou can continue editing and press Enter again to commit more changes.",
+      } else {
+        let commitCount = 0;
+        while (true) {
+          await waitForKey(
+            "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
+            async () => {
+              await removePatch(packageName);
+              if (!noUpdate) {
+                await updateDependencies();
+              }
+            },
           );
+
+          const commitOutput = await commitPatch(patchDir);
+          console.log(commitOutput);
+          commitCount++;
+          logSuccess(`Patch #${commitCount} committed`);
+          if (commitCount === 1) {
+            console.log(
+              "\nYou can continue editing and press Enter again to commit more changes.",
+            );
+          }
         }
       }
     }

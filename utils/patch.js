@@ -1,6 +1,6 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import { mkdir, readdir, rm } from "fs/promises";
+import { mkdir } from "fs/promises";
 import { resolve, join } from "path";
 import { logSuccess, logError } from "./terminal.js";
 import { getPackageVersion } from "./package.js";
@@ -17,7 +17,7 @@ function generatePatchDirName(packageName) {
   const minutes = String(now.getMinutes()).padStart(2, "0");
   const timestamp = `${year}-${month}-${day}-${hours}${minutes}`;
 
-  const safeName = packageName.replace(/[@\/]/g, "-").replace(/^-+/, "");
+  const safeName = packageName.replace(/[@/]/g, "-").replace(/^-+/, "");
   return `${safeName}-${timestamp}`;
 }
 
