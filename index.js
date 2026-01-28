@@ -17,6 +17,7 @@ async function main() {
   const packageName = args.find((arg) => !arg.startsWith("--"));
   const noUpdate = args.includes("--no-update");
   const hotReload = args.includes("--hr");
+  const debug = args.includes("--debug");
   const dirIndex = args.indexOf("--dir");
   const dirPath =
     dirIndex !== -1 && args[dirIndex + 1] ? args[dirIndex + 1] : null;
@@ -70,7 +71,7 @@ async function main() {
 
       // step 4: hot reload or manual commit loop
       if (hotReload) {
-        const watcher = await watchAndCommit(patchDir);
+        const watcher = await watchAndCommit(patchDir, debug);
 
         await waitForKey(
           "\nPress Esc to stop watching and exit...",
@@ -96,7 +97,9 @@ async function main() {
           );
 
           const commitOutput = await commitPatch(patchDir);
-          console.log(commitOutput);
+          if (debug) {
+            console.log(commitOutput);
+          }
           commitCount++;
           logSuccess(`Patch #${commitCount} committed`);
           if (commitCount === 1) {

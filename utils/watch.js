@@ -2,7 +2,7 @@ import chokidar from "chokidar";
 import { commitPatch } from "./patch.js";
 import { logError, logSuccess } from "./terminal.js";
 
-export async function watchAndCommit(patchDir) {
+export async function watchAndCommit(patchDir, debug) {
   let commitCount = 0;
   let isCommitting = false;
   let pendingCommit = false;
@@ -29,7 +29,9 @@ export async function watchAndCommit(patchDir) {
 
     try {
       const commitOutput = await commitPatch(patchDir);
-      console.log(commitOutput);
+      if (debug) {
+        console.log(commitOutput);
+      }
       commitCount++;
       logSuccess(`Patch #${commitCount} auto-committed`);
       console.log("\nPress Esc to stop watching and exit...");
