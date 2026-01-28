@@ -1,0 +1,84 @@
+name: Release and Publish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "package.json"
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Check if version changed
+        id: version_check
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          git checkout HEAD~1 -- package.json 2>/dev/null || exit 0
+          PREVIOUS_VERSION=$(node -p "require('./package.json').version")
+          git checkout HEAD -- package.json
+
+          if [ "$CURRENT_VERSION" != "$PREVIOUS_VERSION" ]; then
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+            echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+            echo "Version changed from $PREVIOUS_VERSION to $CURRENT_VERSION"
+          else
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged: $CURRENT_VERSION"
+          fi
+
+      - name: Create and push tag
+        if: steps.version_check.outputs.version_changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ steps.version_check.outputs.version }}" -m "Release v${{ steps.version_check.outputs.version }}"
+          git push origin "v${{ steps.version_check.outputs.version }}"
+
+      - name: Install dependencies
+        if: steps.version_check.outputs.version_changed == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Publish to npm
+        if: steps.version_check.outputs.version_changed == 'true'
+        run: pnpm publish
+
+      - name: Create GitHub Release
+        if: steps.version_check.outputs.version_changed == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version_check.outputs.version }}
+          release_name: v${{ steps.version_check.outputs.version }}
+          body: |
+            Release version ${{ steps.version_check.outputs.version }}
+
+            Use via:
+            ```bash
+            npx @fynn-is-making-packages/patchit@${{ steps.version_check.outputs.version }}
+            ```
+          draft: false
+          prerelease: false
