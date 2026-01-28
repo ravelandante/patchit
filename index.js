@@ -15,8 +15,8 @@ import { watchAndCommit } from "./utils/watch.js";
 async function main() {
   const args = process.argv.slice(2);
   const packageName = args.find((arg) => !arg.startsWith("--"));
+  const manual = args.includes("--manual");
   const noUpdate = args.includes("--no-update");
-  const hotReload = args.includes("--hr");
   const debug = args.includes("--debug");
   const dirIndex = args.indexOf("--dir");
   const dirPath =
@@ -69,8 +69,8 @@ async function main() {
       console.log("\ncommit command:");
       console.log(`  ${commitCommand}`);
 
-      // step 4: hot reload or manual commit loop
-      if (hotReload) {
+      // step 4: auto or manual commit loop
+      if (!manual) {
         const watcher = await watchAndCommit(patchDir, debug);
 
         await waitForKey(
