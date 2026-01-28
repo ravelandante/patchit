@@ -1,5 +1,7 @@
 ## patchit
 
+[![npm version](https://img.shields.io/npm/v/@fynn-is-making-packages/patchit.svg)](https://www.npmjs.com/package/@fynn-is-making-packages/patchit)
+
 A simple script to semi-automate the use of `pnpm patch <pkg>`.
 
 ### Usage
