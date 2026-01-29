@@ -17,6 +17,12 @@
     "workflow",
     "cli"
   ],
+  "files": [
+    "index.js",
+    "utils/",
+    "LICENSE.md",
+    "README.md"
+  ],
   "author": "Fynn Young",
   "license": "ISC",
   "dependencies": {
