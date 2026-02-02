@@ -135,9 +135,9 @@ export function detectPackageManager() {
 
     if (checkForFile(currentDir, "yarn.lock")) {
       if (checkForFile(currentDir, ".yarnrc.yml")) {
-        return "yarn2";
+        return "yarn-v2";
       }
-      return "yarn1";
+      return "yarn-v1";
     }
 
     if (checkForFile(currentDir, "package-lock.json")) {
