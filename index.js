@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { logSuccess } from "./utils/terminal.js";
+import { logError, logSuccess } from "./utils/terminal.js";
 import { waitForKey } from "./utils/terminal.js";
 import {
   createPatch,
@@ -9,7 +9,11 @@ import {
   commitPatch,
   updateDependencies,
 } from "./utils/patch.js";
-import { useDirPath, revertDirPath } from "./utils/package.js";
+import {
+  useDirPath,
+  revertDirPath,
+  detectPackageManager,
+} from "./utils/package.js";
 import { watchAndCommit } from "./utils/watch.js";
 
 async function main() {
@@ -51,6 +55,15 @@ async function main() {
     }
     // normal flow
     else {
+      const packageManager = detectPackageManager();
+      console.log(`Detected package manager: ${packageManager}`);
+      if (packageManager === "npm") {
+        logError(
+          "Package manager not supported. If this is incorrect, explicitly specify a package manager e.g. --pnpm",
+        );
+        process.exit(1);
+      }
+
       // step 1: install latest dependencies
       if (!noUpdate) {
         await updateDependencies();

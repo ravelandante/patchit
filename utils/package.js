@@ -3,6 +3,8 @@ import { promisify } from "util";
 import { readFile, writeFile } from "fs/promises";
 import { logError } from "./terminal.js";
 import { logSuccess } from "./terminal.js";
+import fs from "fs";
+import path from "path";
 
 const execAsync = promisify(exec);
 
@@ -112,4 +114,38 @@ export async function revertDirPath(packageName, originalValues) {
 
   await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");
   logSuccess(`Reverted ${packageName} to original version`);
+}
+
+function checkForFile(cwd, fileName) {
+  return fs.existsSync(path.join(cwd, fileName));
+}
+
+export function detectPackageManager() {
+  const cwd = process.cwd();
+
+  let currentDir = cwd;
+  while (currentDir !== path.parse(cwd).root) {
+    if (
+      (checkForFile(currentDir, "pnpm-workspace.yaml") ||
+        checkForFile(currentDir, "pnpm-workspace.yml")) &&
+      checkForFile(currentDir, "pnpm-lock.yaml")
+    ) {
+      return "pnpm";
+    }
+
+    if (checkForFile(currentDir, "yarn.lock")) {
+      if (checkForFile(currentDir, ".yarnrc.yml")) {
+        return "yarn2";
+      }
+      return "yarn1";
+    }
+
+    if (checkForFile(currentDir, "package-lock.json")) {
+      return "npm";
+    }
+
+    currentDir = path.dirname(currentDir);
+  }
+
+  return "npm";
 }
