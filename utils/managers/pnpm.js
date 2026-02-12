@@ -58,17 +58,17 @@ export async function openPatch(patchDir) {
   logSuccess("Opened");
 }
 
-export async function removePatch(packageWithVersion, patchDir) {
+export async function removePatch(packageName, packageVersion, patchDir) {
   console.log("\n\nRemoving patch...");
   try {
-    await execAsync(`pnpm patch-remove ${packageWithVersion}`, {
+    await execAsync(`pnpm patch-remove ${packageName}@${packageVersion}`, {
       cwd: process.cwd(),
     });
-    logSuccess("Patch removed");
 
     if (patchDir) {
       await rm(patchDir, { recursive: true, force: true });
     }
+    logSuccess("Patch removed");
   } catch (error) {
     logError(`Failed to remove patch: ${error}`);
   }

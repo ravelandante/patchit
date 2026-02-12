@@ -54,16 +54,11 @@ export async function getPackageVersionFromManifest(packageName) {
 
     const cleanVersion = version.replace(/^[^\d]+/, "");
 
-    return `${packageName}@${cleanVersion}`;
+    return cleanVersion;
   } catch (error) {
     logError(`Failed to read package.json: ${error.message}`);
     process.exit(1);
   }
-}
-
-export async function getPackageVersion(packageName) {
-  const packageVersion = await getPackageVersionFromManifest(packageName);
-  return packageVersion;
 }
 
 export async function useDirPath(packageName, dirPath) {

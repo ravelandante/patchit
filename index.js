@@ -6,7 +6,7 @@ import {
   useDirPath,
   revertDirPath,
   detectPackageManager,
-  getPackageVersion,
+  getPackageVersionFromManifest,
 } from "./utils/package.js";
 import { watchAndCommit } from "./utils/watch.js";
 
@@ -17,7 +17,7 @@ async function main() {
   const noUpdate = args.includes("--no-update");
   const debug = args.includes("--debug");
   const packageManagerIndex = args.indexOf("--pm");
-  const packageManager =
+  let packageManager =
     packageManagerIndex !== -1 && args[packageManagerIndex + 1]
       ? args[packageManagerIndex + 1]
       : null;
@@ -41,7 +41,7 @@ async function main() {
   }
 
   if (!packageManager) {
-    const packageManager = detectPackageManager();
+    packageManager = detectPackageManager();
     console.log(`Detected package manager: ${packageManager}`);
     if (packageManager === "npm") {
       logError(
@@ -84,7 +84,7 @@ async function main() {
       }
 
       // get package version
-      const packageWithVersion = await getPackageVersion(packageName);
+      const packageVersion = await getPackageVersionFromManifest(packageName);
 
       // step 2: create patch
       const patchDir = await manager.createPatch(packageName);
@@ -105,7 +105,7 @@ async function main() {
           "\nPress Esc to stop watching and exit...",
           async () => {
             await watcher.close();
-            await manager.removePatch(packageName, patchDir);
+            await manager.removePatch(packageName, packageVersion, patchDir);
             if (!noUpdate) {
               await manager.updateDependencies();
             }
@@ -117,7 +117,7 @@ async function main() {
           await waitForKey(
             "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
             async () => {
-              await manager.removePatch(packageWithVersion, patchDir);
+              await manager.removePatch(packageName, packageVersion, patchDir);
               if (!noUpdate) {
                 await manager.updateDependencies();
               }

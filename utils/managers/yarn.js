@@ -45,18 +45,12 @@ export async function openPatch(patchDir) {
   logSuccess("Opened");
 }
 
-export async function removePatch(packageWithVersion, patchDir) {
-  console.log("\n\nRemoving patch...");
-  try {
-    // remove patch file stored at .yarn/patches and replace package.json entry with original package version
-    logSuccess("Patch removed");
-
-    if (patchDir) {
-      await rm(patchDir, { recursive: true, force: true });
-    }
-  } catch (error) {
-    logError(`Failed to remove patch: ${error}`);
-  }
+// deletion not implemented for yarn yet
+export async function removePatch(packageName, packageVersion, patchDir) {
+  // Remove patch file from .yarn/patches
+  // Remove patch entry from package.json
+  // Remove the resolution entry
+  // Clean up empty resolutions object
 }
 
 export async function commitPatch(patchDir) {
