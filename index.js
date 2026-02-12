@@ -3,16 +3,10 @@
 import { logError, logSuccess } from "./utils/terminal.js";
 import { waitForKey } from "./utils/terminal.js";
 import {
-  createPatch,
-  openPatch,
-  removePatch,
-  commitPatch,
-  updateDependencies,
-} from "./utils/patch.js";
-import {
   useDirPath,
   revertDirPath,
   detectPackageManager,
+  getPackageVersion,
 } from "./utils/package.js";
 import { watchAndCommit } from "./utils/watch.js";
 
@@ -46,49 +40,54 @@ async function main() {
     process.exit(1);
   }
 
+  if (!packageManager) {
+    const packageManager = detectPackageManager();
+    console.log(`Detected package manager: ${packageManager}`);
+    if (packageManager === "npm") {
+      logError(
+        "Package manager not supported. If this is incorrect, explicitly specify a package manager e.g. --pm pnpm",
+      );
+      process.exit(1);
+    }
+  }
+
+  const managers = {
+    pnpm: await import("./utils/managers/pnpm.js"),
+    "yarn-v2": await import("./utils/managers/yarn.js"),
+  };
+
+  const manager = managers[packageManager];
+
   try {
     // local dir path flow
     if (dirPath) {
       // step 1: update package.json to use local dir
       const originalValues = await useDirPath(packageName, dirPath);
-
       // step 2: install latest dependencies
-      await updateDependencies();
-
+      await manager.updateDependencies();
       // step 3: open the directory in vs code
-      await openPatch(dirPath);
-
+      await manager.openPatch(dirPath);
       console.log("\nYou can now edit the package directly.");
-
       // step 4: wait for user to press Esc to revert and exit
       await waitForKey("\nPress Esc to revert and exit...", async () => {
         await revertDirPath(packageName, originalValues);
-        await updateDependencies();
+        await manager.updateDependencies();
       });
     }
     // normal flow
     else {
-      const packageManager = detectPackageManager();
-      console.log(`Detected package manager: ${packageManager}`);
-      if (packageManager === "npm") {
-        logError(
-          "Package manager not supported. If this is incorrect, explicitly specify a package manager e.g. --pm pnpm",
-        );
-        process.exit(1);
-      }
-
       // step 1: install latest dependencies
       if (!noUpdate) {
-        await updateDependencies();
+        await manager.updateDependencies();
       } else {
         console.log("\nSkipping dependency update...");
       }
 
       // step 2: create patch
-      const patchDir = await createPatch(packageName);
+      const patchDir = await manager.createPatch(packageName);
 
       // step 3: open patch dir in vs code
-      await openPatch(patchDir);
+      await manager.openPatch(patchDir);
 
       const commitCommand = `pnpm patch-commit '${patchDir}'`;
 
@@ -97,15 +96,15 @@ async function main() {
 
       // step 4: auto or manual commit loop
       if (!manual) {
-        const watcher = await watchAndCommit(patchDir, debug);
+        const watcher = await watchAndCommit(patchDir, debug, manager);
 
         await waitForKey(
           "\nPress Esc to stop watching and exit...",
           async () => {
             await watcher.close();
-            await removePatch(packageName, patchDir);
+            await manager.removePatch(packageName, patchDir);
             if (!noUpdate) {
-              await updateDependencies();
+              await manager.updateDependencies();
             }
           },
         );
@@ -115,14 +114,14 @@ async function main() {
           await waitForKey(
             "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
             async () => {
-              await removePatch(packageName, patchDir);
+              await manager.removePatch(patchDir);
               if (!noUpdate) {
-                await updateDependencies();
+                await manager.updateDependencies();
               }
             },
           );
 
-          const commitOutput = await commitPatch(patchDir);
+          const commitOutput = await manager.commitPatch(patchDir);
           if (debug) {
             console.log(commitOutput);
           }

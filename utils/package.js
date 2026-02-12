@@ -62,10 +62,7 @@ export async function getPackageVersionFromManifest(packageName) {
 }
 
 export async function getPackageVersion(packageName) {
-  let packageVersion = await getPackageVersionFromList(packageName);
-  if (!packageVersion) {
-    packageVersion = await getPackageVersionFromManifest(packageName);
-  }
+  const packageVersion = await getPackageVersionFromManifest(packageName);
   return packageVersion;
 }
 

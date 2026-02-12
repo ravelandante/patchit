@@ -2,8 +2,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 import { mkdir, rm } from "fs/promises";
 import { resolve, join } from "path";
-import { logSuccess, logError } from "./terminal.js";
-import { getPackageVersion } from "./package.js";
+import { logSuccess, logError } from "../terminal.js";
 import launch from "launch-editor";
 
 const execAsync = promisify(exec);
@@ -59,10 +58,9 @@ export async function openPatch(patchDir) {
   logSuccess("Opened");
 }
 
-export async function removePatch(packageName, patchDir) {
+export async function removePatch(packageWithVersion, patchDir) {
   console.log("\n\nRemoving patch...");
   try {
-    const packageWithVersion = await getPackageVersion(packageName);
     await execAsync(`pnpm patch-remove ${packageWithVersion}`, {
       cwd: process.cwd(),
     });
