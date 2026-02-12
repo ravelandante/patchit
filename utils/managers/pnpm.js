@@ -59,7 +59,7 @@ export async function openPatch(patchDir) {
 }
 
 export async function removePatch(packageName, packageVersion, patchDir) {
-  console.log("\n\nRemoving patch...");
+  console.log("\nRemoving patch...");
   try {
     await execAsync(`pnpm patch-remove ${packageName}@${packageVersion}`, {
       cwd: process.cwd(),
