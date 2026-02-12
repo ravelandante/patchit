@@ -83,6 +83,9 @@ async function main() {
         console.log("\nSkipping dependency update...");
       }
 
+      // get package version
+      const packageWithVersion = await getPackageVersion(packageName);
+
       // step 2: create patch
       const patchDir = await manager.createPatch(packageName);
 
@@ -114,7 +117,7 @@ async function main() {
           await waitForKey(
             "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
             async () => {
-              await manager.removePatch(patchDir);
+              await manager.removePatch(packageWithVersion, patchDir);
               if (!noUpdate) {
                 await manager.updateDependencies();
               }
