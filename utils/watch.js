@@ -10,7 +10,7 @@ export async function watchAndCommit(patchDir, debug, packageManager) {
 
   const watcher = chokidar.watch(patchDir, {
     ignoreInitial: true,
-    persistent: true,
+    ignored: /node_modules(?:\/|$)/,
     awaitWriteFinish: {
       stabilityThreshold: 2000,
       pollInterval: 100,
