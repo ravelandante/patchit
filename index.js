@@ -80,7 +80,9 @@ async function main() {
       // step 4: wait for user to press Esc to revert and exit
       await waitForKey("\nPress Esc to revert and exit...", async () => {
         await revertDirPath(packageName, originalValues);
-        await manager.updateDependencies();
+        if (!noUpdate) {
+          await manager.updateDependencies();
+        }
       });
     }
     // normal flow
@@ -92,7 +94,6 @@ async function main() {
         console.log("\nSkipping dependency update...");
       }
 
-      // get package version
       const packageVersion = await getPackageVersionFromManifest(packageName);
 
       // step 2: create patch
