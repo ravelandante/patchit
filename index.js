@@ -43,9 +43,15 @@ async function main() {
   if (!packageManager) {
     packageManager = detectPackageManager();
     console.log(`Detected package manager: ${packageManager}`);
-    if (packageManager === "npm") {
+    if (packageManager === "npm" || packageManager === "yarn-v1") {
       logError(
         "Package manager not supported. If this is incorrect, explicitly specify a package manager e.g. --pm pnpm",
+      );
+      process.exit(1);
+    }
+    if (packageManager === "yarn-v2" && dirPath) {
+      logError(
+        "Local directory patches are not supported for yarn v2. Please use pnpm",
       );
       process.exit(1);
     }
@@ -63,11 +69,14 @@ async function main() {
     if (dirPath) {
       // step 1: update package.json to use local dir
       const originalValues = await useDirPath(packageName, dirPath);
+
       // step 2: install latest dependencies
       await manager.updateDependencies();
+
       // step 3: open the directory in vs code
       await manager.openPatch(dirPath);
       console.log("\nYou can now edit the package directly.");
+
       // step 4: wait for user to press Esc to revert and exit
       await waitForKey("\nPress Esc to revert and exit...", async () => {
         await revertDirPath(packageName, originalValues);

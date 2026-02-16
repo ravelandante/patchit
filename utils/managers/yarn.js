@@ -1,6 +1,5 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import { rm } from "fs/promises";
 import { logSuccess, logError } from "../terminal.js";
 import launch from "launch-editor";
 
