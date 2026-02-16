@@ -22,6 +22,8 @@ The script will:
 5. auto-commit the patch when changes are detected
 6. remove the patch when exiting
 
+You can also specify a `--dir` flag and pass in a local directory to use as the patch source.
+
 Differences for yarn:
 
 - yarn does not let you specify a folder to write the patched package to, so it will always be created in an arbitrary temporary folder
@@ -71,8 +73,8 @@ Installing latest dependencies...
 
 | Flag                     | Description                                                                                             |
 | ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `--dir <path>`           | Link a local directory to create a patch from (pnpm only)                                               |
 | `--manual`               | Disable auto-commit mode and instead use Enter to commit a patch                                        |
+| `--pm <package-manager>` | Explicitly specify a package manager if the correct one is not automatically detected { pnpm, yarn-v2 } |
 | `--no-update`            | Skip dependency update before creating patch                                                            |
 | `--debug`                | Show patch commit output                                                                                |
-| `--pm <package-manager>` | Explicitly specify a package manager if the correct one is not automatically detected { pnpm, yarn-v2 } |
-| `--dir <path>`           | (BUGGY) Link a local directory instead of using pnpm patch (for direct development)                     |
