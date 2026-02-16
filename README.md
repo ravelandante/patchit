@@ -69,10 +69,10 @@ Installing latest dependencies...
 
 #### Options
 
-| Flag                     | Description                                                                           |
-| ------------------------ | ------------------------------------------------------------------------------------- |
-| `--manual`               | Disable auto-commit mode and instead use Enter to commit a patch                      |
-| `--no-update`            | Skip dependency update before creating patch                                          |
-| `--debug`                | Show patch commit output                                                              |
-| `--pm <package-manager>` | Explicitly specify a package manager if the correct one is not automatically detected |
-| `--dir <path>`           | (BUGGY) Link a local directory instead of using pnpm patch (for direct development)   |
+| Flag                     | Description                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `--manual`               | Disable auto-commit mode and instead use Enter to commit a patch                                        |
+| `--no-update`            | Skip dependency update before creating patch                                                            |
+| `--debug`                | Show patch commit output                                                                                |
+| `--pm <package-manager>` | Explicitly specify a package manager if the correct one is not automatically detected { pnpm, yarn-v2 } |
+| `--dir <path>`           | (BUGGY) Link a local directory instead of using pnpm patch (for direct development)                     |
