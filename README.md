@@ -1,4 +1,4 @@
-## patchit
+# patchit
 
 [![npm version](https://img.shields.io/npm/v/@fynn-is-making-packages/patchit.svg)](https://www.npmjs.com/package/@fynn-is-making-packages/patchit)
 
@@ -9,7 +9,7 @@ Supported package managers:
 - pnpm
 - yarn v2+
 
-### Usage
+## Usage
 
 Run `npx @fynn-is-making-packages/patchit <pkg>`.
 
@@ -69,7 +69,7 @@ Installing latest dependencies...
 ✓ Dependencies updated
 ```
 
-#### Options
+### Options
 
 | Flag                     | Description                                                                                             |
 | ------------------------ | ------------------------------------------------------------------------------------------------------- |
