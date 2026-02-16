@@ -1,6 +1,14 @@
 import { exec } from "child_process";
 import { promisify } from "util";
-import { readFile, writeFile } from "fs/promises";
+import {
+  readFile,
+  rm,
+  mkdir,
+  copyFile,
+  symlink,
+  readlink,
+  lstat,
+} from "fs/promises";
 import { logError } from "./terminal.js";
 import { logSuccess } from "./terminal.js";
 import fs from "fs";
@@ -61,53 +69,6 @@ export async function getPackageVersionFromManifest(packageName) {
   }
 }
 
-export async function useDirPath(packageName, dirPath) {
-  console.log(`\nUpdating package.json to use local dir...`);
-
-  const packageJson = await readPackageJson();
-
-  const isDependency = packageJson.dependencies?.[packageName];
-  const isDevDependency = packageJson.devDependencies?.[packageName];
-
-  if (!isDependency && !isDevDependency) {
-    logError(`Could not find ${packageName} in package.json dependencies`);
-    process.exit(1);
-  }
-
-  const originalValues = {
-    dependency: isDependency || null,
-    devDependency: isDevDependency || null,
-  };
-
-  if (isDependency) {
-    packageJson.dependencies[packageName] = `link:${dirPath}`;
-  }
-  if (isDevDependency) {
-    packageJson.devDependencies[packageName] = `link:${dirPath}`;
-  }
-
-  await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");
-  logSuccess(`Updated ${packageName} to use: ${dirPath}`);
-
-  return originalValues;
-}
-
-export async function revertDirPath(packageName, originalValues) {
-  console.log(`\nReverting package.json...`);
-
-  const packageJson = await readPackageJson();
-
-  if (originalValues.dependency) {
-    packageJson.dependencies[packageName] = originalValues.dependency;
-  }
-  if (originalValues.devDependency) {
-    packageJson.devDependencies[packageName] = originalValues.devDependency;
-  }
-
-  await writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");
-  logSuccess(`Reverted ${packageName} to original version`);
-}
-
 function checkForFile(cwd, fileName) {
   return fs.existsSync(path.join(cwd, fileName));
 }
@@ -140,4 +101,48 @@ export function detectPackageManager() {
   }
 
   return "npm";
+}
+
+async function copyDirectory(src, dest) {
+  await mkdir(dest, { recursive: true });
+  const entries = await fs.promises.readdir(src, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (entry.name === "node_modules") {
+      continue;
+    }
+
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+
+    try {
+      const stats = await lstat(srcPath);
+
+      if (stats.isSymbolicLink()) {
+        const linkTarget = await readlink(srcPath);
+        await symlink(linkTarget, destPath);
+      } else if (stats.isDirectory()) {
+        await copyDirectory(srcPath, destPath);
+      } else if (stats.isFile()) {
+        await copyFile(srcPath, destPath);
+      }
+    } catch (error) {
+      console.warn(`Warning: Could not copy ${srcPath}: ${error.message}`);
+    }
+  }
+}
+
+export async function syncDirectories(sourceDir, targetDir) {
+  try {
+    console.log(`\nSyncing directories...`);
+    if (fs.existsSync(targetDir)) {
+      await rm(targetDir, { recursive: true, force: true });
+    }
+
+    await copyDirectory(sourceDir, targetDir);
+    logSuccess("Directories synced");
+  } catch (error) {
+    logError(`Failed to sync directories: ${error.message}`);
+    throw error;
+  }
 }

@@ -3,8 +3,6 @@
 import { logError, logSuccess } from "./utils/terminal.js";
 import { waitForKey } from "./utils/terminal.js";
 import {
-  useDirPath,
-  revertDirPath,
   detectPackageManager,
   getPackageVersionFromManifest,
 } from "./utils/package.js";
@@ -65,86 +63,60 @@ async function main() {
   const manager = managers[packageManager];
 
   try {
-    // local dir path flow
-    if (dirPath) {
-      // step 1: update package.json to use local dir
-      const originalValues = await useDirPath(packageName, dirPath);
-
-      // step 2: install latest dependencies
+    // step 1: install latest dependencies
+    if (!noUpdate) {
       await manager.updateDependencies();
+    } else {
+      console.log("\nSkipping dependency update...");
+    }
 
-      // step 3: open the directory in vs code
-      await manager.openPatch(dirPath);
-      console.log("\nYou can now edit the package directly.");
+    const packageVersion = await getPackageVersionFromManifest(packageName);
 
-      // step 4: wait for user to press Esc to revert and exit
-      await waitForKey("\nPress Esc to revert and exit...", async () => {
-        await revertDirPath(packageName, originalValues);
+    // step 2: create patch
+    const patchDir = await manager.createPatch(packageName);
+
+    // step 3: open patch dir in vs code
+    await manager.openPatch(dirPath ?? patchDir);
+
+    const commitCommand = `pnpm patch-commit '${patchDir}'`;
+
+    console.log("\ncommit command:");
+    console.log(`  ${commitCommand}`);
+
+    // step 4: auto or manual commit loop
+    if (!manual) {
+      const watcher = await watchAndCommit(patchDir, debug, manager, dirPath);
+
+      await waitForKey("\nPress Esc to stop watching and exit...", async () => {
+        await watcher.close();
+        await manager.removePatch(packageName, packageVersion, patchDir);
         if (!noUpdate) {
           await manager.updateDependencies();
         }
       });
-    }
-    // normal flow
-    else {
-      // step 1: install latest dependencies
-      if (!noUpdate) {
-        await manager.updateDependencies();
-      } else {
-        console.log("\nSkipping dependency update...");
-      }
-
-      const packageVersion = await getPackageVersionFromManifest(packageName);
-
-      // step 2: create patch
-      const patchDir = await manager.createPatch(packageName);
-
-      // step 3: open patch dir in vs code
-      await manager.openPatch(patchDir);
-
-      const commitCommand = `pnpm patch-commit '${patchDir}'`;
-
-      console.log("\ncommit command:");
-      console.log(`  ${commitCommand}`);
-
-      // step 4: auto or manual commit loop
-      if (!manual) {
-        const watcher = await watchAndCommit(patchDir, debug, manager);
-
+    } else {
+      let commitCount = 0;
+      while (true) {
         await waitForKey(
-          "\nPress Esc to stop watching and exit...",
+          "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
           async () => {
-            await watcher.close();
             await manager.removePatch(packageName, packageVersion, patchDir);
             if (!noUpdate) {
               await manager.updateDependencies();
             }
           },
         );
-      } else {
-        let commitCount = 0;
-        while (true) {
-          await waitForKey(
-            "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
-            async () => {
-              await manager.removePatch(packageName, packageVersion, patchDir);
-              if (!noUpdate) {
-                await manager.updateDependencies();
-              }
-            },
-          );
 
-          const commitOutput = await manager.commitPatch(patchDir);
-          if (debug) {
-            console.log(commitOutput);
-          }
-          commitCount++;
-          logSuccess(`Patch #${commitCount} committed`);
-          if (commitCount === 1) {
-            console.log(
-              "\nYou can continue editing and press Enter again to commit more changes.",
-            );
-          }
+        const commitOutput = await manager.commitPatch(patchDir);
+        if (debug) {
+          console.log(commitOutput);
+        }
+        commitCount++;
+        logSuccess(`Patch #${commitCount} committed`);
+        if (commitCount === 1) {
+          console.log(
+            "\nYou can continue editing and press Enter again to commit more changes.",
+          );
         }
       }
     }

@@ -1,14 +1,21 @@
 import chokidar from "chokidar";
 import { logError, logSuccess } from "./terminal.js";
+import { syncDirectories } from "./package.js";
 
-export async function watchAndCommit(patchDir, debug, packageManager) {
+export async function watchAndCommit(
+  patchDir,
+  debug,
+  packageManager,
+  localDir = null,
+) {
   let commitCount = 0;
   let isCommitting = false;
   let pendingCommit = false;
 
   console.log("\nHot reload enabled - changes will be auto-committed");
 
-  const watcher = chokidar.watch(patchDir, {
+  const watchDir = localDir || patchDir;
+  const watcher = chokidar.watch(watchDir, {
     ignoreInitial: true,
     ignored: /node_modules(?:\/|$)/,
     awaitWriteFinish: {
@@ -17,7 +24,7 @@ export async function watchAndCommit(patchDir, debug, packageManager) {
     },
   });
 
-  const doCommit = async () => {
+  const commit = async () => {
     if (isCommitting) {
       pendingCommit = true;
       return;
@@ -27,6 +34,9 @@ export async function watchAndCommit(patchDir, debug, packageManager) {
     pendingCommit = false;
 
     try {
+      if (localDir) {
+        await syncDirectories(localDir, patchDir);
+      }
       const commitOutput = await packageManager.commitPatch(patchDir);
       if (debug) {
         console.log(commitOutput);
@@ -40,7 +50,7 @@ export async function watchAndCommit(patchDir, debug, packageManager) {
       isCommitting = false;
 
       if (pendingCommit) {
-        setTimeout(() => doCommit(), 100);
+        setTimeout(() => commit(), 100);
       }
     }
   };
@@ -48,15 +58,15 @@ export async function watchAndCommit(patchDir, debug, packageManager) {
   watcher
     .on("change", (path) => {
       console.log(`\nDetected change: ${path}`);
-      doCommit();
+      commit();
     })
     .on("add", (path) => {
       console.log(`\nDetected new file: ${path}`);
-      doCommit();
+      commit();
     })
     .on("unlink", (path) => {
       console.log(`\nDetected deletion: ${path}`);
-      doCommit();
+      commit();
     })
     .on("error", (error) => {
       logError(`Watcher error: ${error}`);
