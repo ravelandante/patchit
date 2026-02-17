@@ -64,10 +64,12 @@ export async function removePatch(
   packageVersion,
   patchDir,
   managerVersion,
+  isVersionSpecified,
 ) {
   console.log("\nRemoving patch...");
   try {
-    const shouldUseVersionToRemove = semver.lt(managerVersion, "9.7.0");
+    const shouldUseVersionToRemove =
+      semver.lt(managerVersion, "9.7.0") || isVersionSpecified;
     await execAsync(
       `pnpm patch-remove ${packageName}${shouldUseVersionToRemove ? "@" + packageVersion : ""}`,
       {

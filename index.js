@@ -63,6 +63,17 @@ async function main() {
   const manager = managers[packageManager];
   const managerVersion = await manager.getVersion();
 
+  let parsedPackageName = packageName;
+  let packageVersion = null;
+  let isVersionSpecified = false;
+
+  const lastAtIndex = packageName.lastIndexOf("@");
+  if (lastAtIndex > 0) {
+    parsedPackageName = packageName.substring(0, lastAtIndex);
+    packageVersion = packageName.substring(lastAtIndex + 1);
+    isVersionSpecified = true;
+  }
+
   try {
     // step 1: install latest dependencies
     if (!noUpdate) {
@@ -71,7 +82,9 @@ async function main() {
       console.log("\nSkipping dependency update...");
     }
 
-    const packageVersion = await getPackageVersionFromManifest(packageName);
+    if (!packageVersion) {
+      packageVersion = await getPackageVersionFromManifest(parsedPackageName);
+    }
 
     // step 2: create patch
     const patchDir = await manager.createPatch(packageName);
@@ -91,10 +104,11 @@ async function main() {
       await waitForKey("\nPress Esc to stop watching and exit...", async () => {
         await watcher.close();
         await manager.removePatch(
-          packageName,
+          parsedPackageName,
           packageVersion,
           patchDir,
           managerVersion,
+          isVersionSpecified,
         );
         if (!noUpdate) {
           await manager.updateDependencies();
@@ -107,10 +121,11 @@ async function main() {
           "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
           async () => {
             await manager.removePatch(
-              packageName,
+              parsedPackageName,
               packageVersion,
               patchDir,
               managerVersion,
+              isVersionSpecified,
             );
             if (!noUpdate) {
               await manager.updateDependencies();
