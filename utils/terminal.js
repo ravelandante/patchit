@@ -14,7 +14,7 @@ export function logError(message) {
   console.log(`${colours.red}✗ ${message}${colours.reset}`);
 }
 
-export async function waitForKey(prompt, onEscape) {
+export async function waitForKey(prompt, onEscape, onBackspace) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -27,14 +27,19 @@ export async function waitForKey(prompt, onEscape) {
   }
 
   return new Promise((resolve) => {
-    const onKeypress = async (str, key) => {
+    const onKeypress = async (_, key) => {
       if (key.name === "escape") {
         if (process.stdin.isTTY) {
           process.stdin.setRawMode(false);
         }
         rl.close();
         await onEscape();
-        process.exit(0);
+      } else if (key.name === "backspace") {
+        if (process.stdin.isTTY) {
+          process.stdin.setRawMode(false);
+        }
+        rl.close();
+        await onBackspace();
       } else if (key.name === "return") {
         if (process.stdin.isTTY) {
           process.stdin.setRawMode(false);

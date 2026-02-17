@@ -108,24 +108,35 @@ async function main() {
         preBuild,
       );
 
-      await waitForKey("\nPress Esc to stop watching and exit...", async () => {
-        await watcher.close();
-        await manager.removePatch(
-          parsedPackageName,
-          packageVersion,
-          patchDir,
-          managerVersion,
-          isVersionSpecified,
-        );
-        if (!noUpdate) {
-          await manager.updateDependencies();
-        }
-      });
+      await waitForKey(
+        "\nPress Esc to exit, Backspace to remove patch and exit...",
+        async () => {
+          await watcher.close();
+          process.exit(0);
+        },
+        async () => {
+          await watcher.close();
+          await manager.removePatch(
+            parsedPackageName,
+            packageVersion,
+            patchDir,
+            managerVersion,
+            isVersionSpecified,
+          );
+          if (!noUpdate) {
+            await manager.updateDependencies();
+          }
+          process.exit(0);
+        },
+      );
     } else {
       let commitCount = 0;
       while (true) {
         await waitForKey(
-          "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
+          "\nPress Enter⏎ to commit changes (Esc to exit, Backspace to remove patch and exit)...",
+          () => {
+            process.exit(0);
+          },
           async () => {
             await manager.removePatch(
               parsedPackageName,
@@ -137,6 +148,7 @@ async function main() {
             if (!noUpdate) {
               await manager.updateDependencies();
             }
+            process.exit(0);
           },
         );
 

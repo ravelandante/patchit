@@ -13,7 +13,7 @@ export async function watchAndCommit(
   let isCommitting = false;
   let pendingCommit = false;
 
-  console.log("\nHot reload enabled - changes will be auto-committed");
+  console.log("\nWatcher enabled - changes will be auto-committed");
 
   const watchDir = localDir || patchDir;
   const watcher = chokidar.watch(watchDir, {
@@ -52,7 +52,7 @@ export async function watchAndCommit(
       }
       commitCount++;
       logSuccess(`Patch #${commitCount} auto-committed`);
-      console.log("\nPress Esc to stop watching and exit...");
+      console.log("\nPress Esc to exit, Backspace to remove patch and exit...");
     } catch (error) {
       logError(`Failed to commit: ${error.message}`);
     } finally {
