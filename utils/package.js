@@ -79,8 +79,8 @@ export function detectPackageManager() {
   let currentDir = cwd;
   while (currentDir !== path.parse(cwd).root) {
     if (
-      (checkForFile(currentDir, "pnpm-workspace.yaml") ||
-        checkForFile(currentDir, "pnpm-workspace.yml")) &&
+      checkForFile(currentDir, "pnpm-workspace.yaml") ||
+      checkForFile(currentDir, "pnpm-workspace.yml") ||
       checkForFile(currentDir, "pnpm-lock.yaml")
     ) {
       return "pnpm";
