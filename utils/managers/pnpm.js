@@ -4,6 +4,7 @@ import { mkdir, rm } from "fs/promises";
 import { resolve, join } from "path";
 import { logSuccess, logError } from "../terminal.js";
 import launch from "launch-editor";
+import semver from "semver";
 
 const execAsync = promisify(exec);
 
@@ -58,12 +59,21 @@ export async function openPatch(patchDir) {
   logSuccess("Opened");
 }
 
-export async function removePatch(packageName, packageVersion, patchDir) {
+export async function removePatch(
+  packageName,
+  packageVersion,
+  patchDir,
+  managerVersion,
+) {
   console.log("\nRemoving patch...");
   try {
-    await execAsync(`pnpm patch-remove ${packageName}@${packageVersion}`, {
-      cwd: process.cwd(),
-    });
+    const shouldUseVersionToRemove = semver.lt(managerVersion, "9.7.0");
+    await execAsync(
+      `pnpm patch-remove ${packageName}${shouldUseVersionToRemove ? "@" + packageVersion : ""}`,
+      {
+        cwd: process.cwd(),
+      },
+    );
 
     if (patchDir) {
       await rm(patchDir, { recursive: true, force: true });
@@ -81,4 +91,16 @@ export async function commitPatch(patchDir) {
     cwd: process.cwd(),
   });
   return commitOutput;
+}
+
+export async function getVersion() {
+  try {
+    const { stdout: version } = await execAsync(`pnpm --version`, {
+      cwd: process.cwd(),
+    });
+    return version.trim();
+  } catch (error) {
+    logError(`Failed to fetch pnpm version: ${error.message}`);
+    throw error;
+  }
 }

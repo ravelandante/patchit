@@ -45,7 +45,12 @@ export async function openPatch(patchDir) {
 }
 
 // deletion not implemented for yarn yet
-export async function removePatch(packageName, packageVersion, patchDir) {
+export async function removePatch(
+  packageName,
+  packageVersion,
+  patchDir,
+  managerVersion,
+) {
   // Remove patch file from .yarn/patches
   // Remove patch entry from package.json
   // Remove the resolution entry
@@ -59,4 +64,16 @@ export async function commitPatch(patchDir) {
     cwd: process.cwd(),
   });
   return commitOutput;
+}
+
+export async function getVersion() {
+  try {
+    const { stdout: version } = await execAsync(`yarn --version`, {
+      cwd: process.cwd(),
+    });
+    return version.trim();
+  } catch (error) {
+    logError(`Failed to fetch yarn version: ${error.message}`);
+    throw error;
+  }
 }

@@ -61,6 +61,7 @@ async function main() {
   };
 
   const manager = managers[packageManager];
+  const managerVersion = await manager.getVersion();
 
   try {
     // step 1: install latest dependencies
@@ -89,7 +90,12 @@ async function main() {
 
       await waitForKey("\nPress Esc to stop watching and exit...", async () => {
         await watcher.close();
-        await manager.removePatch(packageName, packageVersion, patchDir);
+        await manager.removePatch(
+          packageName,
+          packageVersion,
+          patchDir,
+          managerVersion,
+        );
         if (!noUpdate) {
           await manager.updateDependencies();
         }
@@ -100,7 +106,12 @@ async function main() {
         await waitForKey(
           "\nPress Enter⏎ to commit changes (Esc to remove patch and exit)...",
           async () => {
-            await manager.removePatch(packageName, packageVersion, patchDir);
+            await manager.removePatch(
+              packageName,
+              packageVersion,
+              patchDir,
+              managerVersion,
+            );
             if (!noUpdate) {
               await manager.updateDependencies();
             }
