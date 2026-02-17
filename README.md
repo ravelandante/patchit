@@ -74,6 +74,7 @@ Installing latest dependencies...
 | Flag                     | Description                                                                                             |
 | ------------------------ | ------------------------------------------------------------------------------------------------------- |
 | `--dir <path>`           | Link a local directory to create a patch from (pnpm only)                                               |
+| `--build`                | Run `npm run build` before committing a local directory as a patch                                      |
 | `--manual`               | Disable auto-commit mode and instead use Enter to commit a patch                                        |
 | `--pm <package-manager>` | Explicitly specify a package manager if the correct one is not automatically detected { pnpm, yarn-v2 } |
 | `--no-update`            | Skip dependency update before creating patch                                                            |
