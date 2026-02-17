@@ -1,12 +1,13 @@
 import chokidar from "chokidar";
 import { logError, logSuccess } from "./terminal.js";
-import { syncDirectories } from "./package.js";
+import { syncDirectories, buildDirectory } from "./package.js";
 
 export async function watchAndCommit(
   patchDir,
   debug,
   packageManager,
   localDir = null,
+  preBuild = false,
 ) {
   let commitCount = 0;
   let isCommitting = false;
@@ -21,7 +22,7 @@ export async function watchAndCommit(
       const relativePath = path.startsWith(watchDir)
         ? path.slice(watchDir.length)
         : path;
-      return /(?:^|[/\\])node_modules(?:[/\\]|$)/.test(relativePath);
+      return /(?:^|[/\\])(node_modules|dist)(?:[/\\]|$)/.test(relativePath);
     },
     awaitWriteFinish: {
       stabilityThreshold: 2000,
@@ -40,6 +41,9 @@ export async function watchAndCommit(
 
     try {
       if (localDir) {
+        if (preBuild) {
+          await buildDirectory(localDir);
+        }
         await syncDirectories(localDir, patchDir);
       }
       const commitOutput = await packageManager.commitPatch(patchDir);

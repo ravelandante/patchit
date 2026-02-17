@@ -146,3 +146,16 @@ export async function syncDirectories(sourceDir, targetDir) {
     throw error;
   }
 }
+
+export async function buildDirectory(localDir) {
+  console.log(`\nBuilding patch...`);
+  try {
+    await execAsync(`npm run build`, {
+      cwd: localDir,
+    });
+    logSuccess("Patch built successfully");
+  } catch (error) {
+    logError(`Failed to build patch: ${error.message}`);
+    throw error;
+  }
+}

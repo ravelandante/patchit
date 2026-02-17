@@ -14,6 +14,7 @@ async function main() {
   const manual = args.includes("--manual");
   const noUpdate = args.includes("--no-update");
   const debug = args.includes("--debug");
+  const preBuild = args.includes("--build");
   const packageManagerIndex = args.indexOf("--pm");
   let packageManager =
     packageManagerIndex !== -1 && args[packageManagerIndex + 1]
@@ -99,7 +100,13 @@ async function main() {
 
     // step 4: auto or manual commit loop
     if (!manual) {
-      const watcher = await watchAndCommit(patchDir, debug, manager, dirPath);
+      const watcher = await watchAndCommit(
+        patchDir,
+        debug,
+        manager,
+        dirPath,
+        preBuild,
+      );
 
       await waitForKey("\nPress Esc to stop watching and exit...", async () => {
         await watcher.close();
