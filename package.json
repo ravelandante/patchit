@@ -1,6 +1,6 @@
 {
   "name": "@fynn-is-making-packages/patchit",
-  "version": "1.6.8",
+  "version": "1.6.9",
   "description": "Interactive pnpm patch workflow helper",
   "type": "module",
   "main": "index.js",
