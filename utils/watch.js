@@ -17,7 +17,12 @@ export async function watchAndCommit(
   const watchDir = localDir || patchDir;
   const watcher = chokidar.watch(watchDir, {
     ignoreInitial: true,
-    ignored: /node_modules(?:\/|$)/,
+    ignored: (path) => {
+      const relativePath = path.startsWith(watchDir)
+        ? path.slice(watchDir.length)
+        : path;
+      return /(?:^|[/\\])node_modules(?:[/\\]|$)/.test(relativePath);
+    },
     awaitWriteFinish: {
       stabilityThreshold: 2000,
       pollInterval: 100,
