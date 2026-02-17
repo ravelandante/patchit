@@ -100,7 +100,7 @@ export function detectPackageManager() {
     currentDir = path.dirname(currentDir);
   }
 
-  return "npm";
+  return "unknown";
 }
 
 async function copyDirectory(src, dest) {
