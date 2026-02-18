@@ -12,6 +12,7 @@ export async function watchAndCommit(
   let commitCount = 0;
   let isCommitting = false;
   let pendingCommit = false;
+  let isBuilding = false;
 
   console.log("\nWatcher enabled - changes will be auto-committed");
 
@@ -22,7 +23,14 @@ export async function watchAndCommit(
       const relativePath = path.startsWith(watchDir)
         ? path.slice(watchDir.length)
         : path;
-      return /(?:^|[/\\])(node_modules|dist)(?:[/\\]|$)/.test(relativePath);
+      if (/(?:^|[/\\])node_modules(?:[/\\]|$)/.test(relativePath)) {
+        return true;
+      }
+      // only ignore dist while actively building to prevent watch-commit loops
+      if (isBuilding && /(?:^|[/\\])dist(?:[/\\]|$)/.test(relativePath)) {
+        return true;
+      }
+      return false;
     },
     awaitWriteFinish: {
       stabilityThreshold: 2000,
@@ -42,9 +50,11 @@ export async function watchAndCommit(
     try {
       if (localDir) {
         if (preBuild) {
+          isBuilding = true;
           await buildDirectory(localDir);
         }
         await syncDirectories(localDir, patchDir);
+        isBuilding = false;
       }
       const commitOutput = await packageManager.commitPatch(patchDir);
       if (debug) {
