@@ -50,15 +50,15 @@ Opening patch dir...
 commit command:
   pnpm patch-commit 'node_modules/.patchit/example-package-2026-02-12-1022'
 
-Hot reload enabled - changes will be auto-committed
+Watcher enabled - changes will be auto-committed
 
-Press Esc to stop watching and exit...
+Press Esc to exit, Backspace to remove patch and exit...
 Detected change: node_modules/.patchit/example-package-2026-02-12-1022/example-file.js
 
 Running: pnpm patch-commit 'node_modules/.patchit/example-package-2026-02-12-1022'
 ✓ Patch #1 auto-committed
 
-Press Esc to stop watching and exit...
+Press Esc to exit, Backspace to remove patch and exit...
 
 > ESC
 
