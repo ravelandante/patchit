@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import { logError, logSuccess } from "./utils/terminal.js";
-import { waitForKey } from "./utils/terminal.js";
+import { logError, logSuccess } from "./src/terminal.js";
+import { waitForKey } from "./src/terminal.js";
 import {
   detectPackageManager,
   getPackageVersionFromManifest,
-} from "./utils/package.js";
-import { watchAndCommit } from "./utils/watch.js";
+} from "./src/package.js";
+import { watchAndCommit } from "./src/watch.js";
 
 async function main() {
   const args = process.argv.slice(2);
@@ -57,8 +57,8 @@ async function main() {
   }
 
   const managers = {
-    pnpm: await import("./utils/managers/pnpm.js"),
-    "yarn-v2": await import("./utils/managers/yarn.js"),
+    pnpm: await import("./src/managers/pnpm.js"),
+    "yarn-v2": await import("./src/managers/yarn.js"),
   };
 
   const manager = managers[packageManager];
